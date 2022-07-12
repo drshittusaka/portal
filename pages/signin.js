@@ -10,7 +10,7 @@ import {useState} from 'react';
 
 export default function SignIn({ csrfToken, providers }) {
   const router = useRouter()
-  const [email, setEmail] = useState('hdhshs@gmail.com')
+  const [email, setEmail] = useState('')
   const [message, setMessage] =useState('')
   const [password, setPassword] = useState('')
   

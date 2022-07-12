@@ -53,7 +53,7 @@ export async function getServerSideProps(context){
      'Content-Type' : 'application/json' 
     }
   })
-  const questions = await JSON.parse(JSON.stringify(resp))
+  const questions = await resp.json() //JSON.parse(JSON.stringify(resp))
   return {
     props : {
       data : questions

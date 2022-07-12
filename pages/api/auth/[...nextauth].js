@@ -12,6 +12,22 @@ import MongoClientPromise from '../../../lib/mongodb'
 
 
 export default NextAuth({
+  providers:[
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET
+    })
+  ]
+  
+})
+
+
+
+/** export default NextAuth({
   providers: [
   CredentialsProvider({
     // The name to display on the sign in form (e.g. 'Sign in with...')
