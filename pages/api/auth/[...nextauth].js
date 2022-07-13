@@ -5,6 +5,7 @@ import { MongoClient } from 'mongodb'
 import bcrypt from 'bcryptjs'
 import GitHubProvider from "next-auth/providers/github"
 import GoogleProvider from "next-auth/providers/google"
+import FacebookProvider from "next-auth/providers/facebook";
 import Auth0Provider from "next-auth/providers/auth0"
 import { MongoDBAdapter } from '@next-auth/mongodb-adapter'
 import EmailProvider from 'next-auth/providers/email'
@@ -13,6 +14,10 @@ import MongoClientPromise from '../../../lib/mongodb'
 
 export default NextAuth({
   providers:[
+    EmailProvider({
+      server: process.env.EMAIL_SERVER,
+      from: process.env.EMAIL_FROM
+    }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET
@@ -20,8 +25,17 @@ export default NextAuth({
     GitHubProvider({
       clientId: process.env.GITHUB_ID,
       clientSecret: process.env.GITHUB_SECRET
-    })
-  ]
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET
+    }),
+    
+  ],
+  secret: process.env.JWT_SECRET,
+  adapter: MongoDBAdapter(clientPromise),
+  
+  
   
 })
 
