@@ -39,7 +39,7 @@ export default function SignIn({ csrfToken, providers }) {
       <button onClick={(e)=>onSubmit(e)}>Sign in</button>
     </form>
   
-  <form method="post" action="/api/auth/callback/credentials">
+  <form method="post" action="/api/auth/callback/emails">
       <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
       <label>
         Username
