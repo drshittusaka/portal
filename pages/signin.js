@@ -39,7 +39,7 @@ export default function SignIn({ csrfToken, providers }) {
       <button onClick={(e)=>onSubmit(e)}>Sign in</button>
     </form>
   
-  <form method="post" action="/api/auth/callback/emails">
+  <form method="post" action="/api/auth/callback/email">
       <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
       <label>
         Username
@@ -54,7 +54,7 @@ export default function SignIn({ csrfToken, providers }) {
           return null
         } return(
         <div key={provider.name}>
-          <button onClick={() => signIn(provider.id, {callbackUrl : 'questionBank'})}>
+          <button onClick={() => signIn(provider.id, {callbackUrl : `/home`})}>
             Sign in with {provider.name}
           </button>
         </div>)
@@ -71,7 +71,7 @@ export async function getServerSideProps(context) {
 
   if (session) {
     return {
-      redirect: { destination: "/" },
+      redirect: { destination: "/home" },
     };
   }
 

@@ -7,6 +7,8 @@ import ValidationError from 'yup';
 import {useSWR} from 'swr';
 import {useState} from 'react'
 import axios from 'axios'
+import clientPromise from "../lib/mongodb";
+import { getSession } from 'next-auth/react';
 
 
 //import {useState, useEffect} from 'react'
@@ -185,8 +187,8 @@ export default CreateQuiz
 
 
 export async function getServerSideProps(context){
- const {query} = context
- let {subject} = query
+ //const {query} = context
+ //let {subject} = query
   /**const client = await clientPromise;
   const db = client.db("StudentPortal")
   const post = subject ? await db.collection("Question Bank").find({subject: subject}).toArray() : await db.collection("Question Bank").find({}).toArray()
@@ -194,16 +196,24 @@ export async function getServerSideProps(context){
   const questions = await JSON.parse(JSON.stringify(post)) //JSON.parse(JSON.stringify(resp))
      
   **/
-  const queryString = subject ? `?subject=${subject}` : ''
-  const resp = await fetch (`http://localhost:3000/api/questionBank${queryString}`
+  //const queryString = subject ? `?subject=${subject}` : ''
+
+  const client = await clientPromise;
+  const db = client.db("StudentPortal");
+  const session = await getSession(context)
+  const email = session.user.email
+  const question = await db.collection("Question Bank").find({author : email }).toArray();
+  const questions = await JSON.parse(JSON.stringify(question))
+
+  /** const resp = await fetch (`http://localhost:3000/api/questionBank${queryString}`
   
   , {
     method : 'GET',
     headers: {
      'Content-Type' : 'application/json' 
     }
-  }) 
-  const questions = await resp.json()
+  }) **/
+  //const questions = await resp.json()
   return {
     props : {
       datas : questions

@@ -14,6 +14,7 @@ import MongoClientPromise from '../../../lib/mongodb'
 
 export default NextAuth({
   providers:[
+    
     EmailProvider({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
@@ -24,7 +25,8 @@ export default NextAuth({
         }
       },
       from: process.env.EMAIL_FROM
-    }),
+    })
+      ,
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET
@@ -36,12 +38,51 @@ export default NextAuth({
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET
-    }),
+    })
     
   ],
   secret: process.env.JWT_SECRET,
   adapter: MongoDBAdapter(clientPromise),
-  
+  pages: {
+    signIn: '/signin',
+    //signOut: '/auth/signout',
+   // error: '/auth/error', // Error code passed in query string as ?error=
+    //erifyRequest: '/auth/verify-request', // (used for check email message)
+    newUser: '/createProfile' // New users will be directed here on first sign in (leave the property out if not of interest)
+  },
+  session: {
+    jwt: true
+  },
+  jwt: {
+    secret: 'asdcvbtjhm'
+  },
+  callbacks: {
+    async jwt(token, user) {
+      if (user) {
+        token.id = user.role
+      }
+      return token
+    },
+    async session(session, user, account) {
+     // session.user = await users
+      return session
+    }
+  }
+ /**callbacks: { 
+    async jwt({ token, account }) { 
+      // Persist the OAuth access_token to the token right after signin
+      if (account) {
+        token.accessToken = account.access_token
+      }
+      return token
+    },  
+    async session( {session, user} ) {
+      //session.role = user.role
+      // Send properties to the client, like an access_token from a provider.
+     // session.user.role = user.role
+      return session
+    }
+  } **/
   
   
 })

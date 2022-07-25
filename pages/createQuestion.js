@@ -2,13 +2,18 @@ import {Formik, Form, Field, FieldArray, ErrorMessage} from 'formik';
 import * as yup from 'yup';
 import ValidationError from 'yup';
 import {useRouter} from 'next/router';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+
 
 
 const CreateQuestion=()=>{
+  const { data : session} = useSession()
   const subjects=['','Mathematics', 'English Language', 'Biology', 'Chemistry', 'Physics']
   const questionTypes=['','Single Best Answer', 'Multiple Choice']
   const router = useRouter()
   const initialValues = {
+    author : session.user.email,
     subject : ' ',
     questionType : ' ',
     question : ' ',
@@ -62,86 +67,100 @@ const CreateQuestion=()=>{
    }
  
 
-  return<>
-  <h2>Create Question</h2>
-  <Formik
-  initialValues = {initialValues}
-  onSubmit = {onSubmit}
-  validationSchema = {validationSchema}
-  >
-  {formik=>{
-    return<Form>
-  <div>
-  <label htmlFor='Subject'>Select Subject/Course</label>
-    <Field as='select'name='subject'>
-    {
-      subjects.map(subject=>{
-        return <option key={subject} value={subject}>{subject}</option>
-      })
-    }
-    </Field>
-  <ErrorMessage name='subject' />
-  </div>
-    
-    
-    
-     <div>
-  <label htmlFor='questionType'>Type of Question</label>
-    <Field as='select'name='questionType'>
-    {
-      questionTypes.map(questionType=>{
-        return <option key={questionType} value={questionType}>{questionType}</option>
-      })
-    }
-    </Field>
-  <ErrorMessage name='questionType' />
-  </div>
-    
-  
-    
+  if(session){
+    return<>
+    <h2>Create Question</h2>
+    <Formik
+    initialValues = {initialValues}
+    onSubmit = {onSubmit}
+    validationSchema = {validationSchema}
+    >
+    {formik=>{
+      return<Form>
     <div>
-  <label htmlFor='question'>Enter Question</label>
-  <Field name='question' type='text'/>
- <ErrorMessage name='question' />
-  </div>
-    <div>
-  <label htmlFor='Options'>Enter Choices</label>
-  <FieldArray name='answers'>{
-    (FieldArrayProps)=>{
-      const {push, remove, form} = FieldArrayProps
-      const {values} = form
-      const {answers} = values
-    return( <div> 
+    <label htmlFor='Subject'>Select Subject/Course</label>
+      <Field as='select'name='subject'>
+      {
+        subjects.map(subject=>{
+          return <option key={subject} value={subject}>{subject}</option>
+        })
+      }
+      </Field>
+    <ErrorMessage name='subject' />
+    </div>
       
-      <div>{answers.map((answer, index) => (
-                        <div key={index}>
-                          <Field type='checkbox' name={`answers[${index}].is_correct`} />
-                          <Field name={`answers[${index}].answer`} />
-                         
-                          {index > 0 && (
-                            <button type='button' onClick={() => remove(index)}>
-                              -
-                            </button>
-                          )}
-                        </div>
-                      ))}
-      { answers.length < 5 && (<button type='button' onClick={() => push()}>
-                        +
-                      </button>)}
-                    </div>
-   </div>)
-    }
-  }</FieldArray>
- 
-   
-  </div>
-    <button type='submit' disabled={!formik.isValid || formik.isSubmitting || formik.unTouched }>
-              Submit
-            </button>
+      
+      
+       <div>
+    <label htmlFor='questionType'>Type of Question</label>
+      <Field as='select'name='questionType'>
+      {
+        questionTypes.map(questionType=>{
+          return <option key={questionType} value={questionType}>{questionType}</option>
+        })
+      }
+      </Field>
+    <ErrorMessage name='questionType' />
+    </div>
+
     
-  </Form>}}
-  </Formik>
-  </>
+    <div>
+    <Field name='author' type='text' disabled/>
+   <ErrorMessage name='author' />
+    </div>
+      
+    
+      
+      <div>
+    <label htmlFor='question'>Enter Question</label>
+    <Field name='question' type='text'/>
+   <ErrorMessage name='question' />
+    </div>
+      <div>
+    <label htmlFor='Options'>Enter Choices</label>
+    <FieldArray name='answers'>{
+      (FieldArrayProps)=>{
+        const {push, remove, form} = FieldArrayProps
+        const {values} = form
+        const {answers} = values
+      return( <div> 
+        
+        <div>{answers.map((answer, index) => (
+                          <div key={index}>
+                            <Field type='checkbox' name={`answers[${index}].is_correct`} />
+                            <Field name={`answers[${index}].answer`} />
+                           
+                            {index > 0 && (
+                              <button type='button' onClick={() => remove(index)}>
+                                -
+                              </button>
+                            )}
+                          </div>
+                        ))}
+        { answers.length < 5 && (<button type='button' onClick={() => push()}>
+                          +
+                        </button>)}
+                      </div>
+     </div>)
+      }
+    }</FieldArray>
+   
+     
+    </div>
+      <button type='submit' disabled={!formik.isValid || formik.isSubmitting || formik.unTouched }>
+                Submit
+              </button>
+      
+    </Form>}}
+    </Formik>
+    </>
+  }
+
+  return(
+    <>
+    You need to sign in before you can create question <Link href='/signin'><a>Sign in</a></Link>
+    </>
+  )
 }
 
 export default CreateQuestion

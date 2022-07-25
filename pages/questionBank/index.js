@@ -1,5 +1,7 @@
 import {useRouter} from 'next/router';
+import clientPromise from "../../lib/mongodb";
 import Link from 'next/link' 
+import { getSession } from 'next-auth/react';
 //import {useState, useEffect} from 'react'
 export default function QuestionBank ({data}){
   //const [dataState, setDataState] = useState([])
@@ -47,13 +49,12 @@ export default function QuestionBank ({data}){
 
 
 export async function getServerSideProps(context){
-  const resp = await fetch ('http://localhost:3000/api/questionBank', {
-    method : 'GET',
-    headers: {
-     'Content-Type' : 'application/json' 
-    }
-  })
-  const questions = await resp.json() //JSON.parse(JSON.stringify(resp))
+  const client = await clientPromise;
+  const db = client.db("StudentPortal");
+  const session = await getSession(context)
+  const email = session.user.email
+  const question = await db.collection("Question Bank").find({author : email}).toArray();
+  const questions = await JSON.parse(JSON.stringify(question))
   return {
     props : {
       data : questions

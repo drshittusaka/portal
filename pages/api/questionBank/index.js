@@ -1,6 +1,10 @@
+
 import clientPromise from "../../../lib/mongodb";
+import { getSession } from "next-auth/react";
 
 export default async function handler(req, res) {
+  //const session = await getSession(req)
+// console.log(session.user.email)
   const subject = req.query.subject
   const client = await clientPromise;
   const db = client.db("StudentPortal");
