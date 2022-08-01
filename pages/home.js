@@ -1,16 +1,194 @@
 
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Stack from "@mui/material/Stack";
+import Button from "@mui/material/Button";
 import { useSession, signIn, signOut, getSession} from "next-auth/react"
 import { useEffect, useState } from "react";
 import Link from "next/link"
 import clientPromise from "../lib/mongodb";
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import { useRouter } from 'next/router';
 
 
-export default function Component({ user}) {
+export default function Component({ user, passKeys}) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter()
  let {data : session } = useSession()
+ 
+ const handleClickOpen = () => {
+  setOpen(true);
+};
 
-console.log(session)
+
+ let [passKey, setPassKey] = useState( {
+  chiefExaminerPass: Array(3).fill(""),
+  examinerPass: Array(3).fill(""),
+  candidatePass: Array(3).fill("")
+}
+);
+
+
+
+//generateKey function to generate Pass Keys, save to database and close the dialog box
+const generateKey = async (e) => {
+
+  //e.preventDefault()
+
   
-  if (session && user.role === 'Chief Examiner') {
+
+  let chiefExaminerPass = passKey.chiefExaminerPass.map((e, index) => {
+    return (passKey.chiefExaminerPass[index] = Math.random()
+      .toString(36)
+      .substring(2, 4));
+  })
+  let examinerPass = passKey.examinerPass.map((e, index) => {
+    return (passKey.examinerPass[index] = Math.random()
+      .toString(36)
+      .substring(2, 4));
+  })
+  let candidatePass = passKey.candidatePass.map((e, index) => {
+    return (passKey.candidatePass[index] = Math.random()
+      .toString(36)
+      .substring(2, 4));
+  })
+  setPassKey({
+      chiefExaminerPass: chiefExaminerPass,
+      examinerPass: examinerPass,
+      candidatePass: candidatePass
+    }
+  );
+  savePassKey()
+}
+
+const savePassKey = async (e) =>{
+
+
+  const response = await fetch(
+    `/api/createPassKey/${passKeys._id}`,
+    { method : 'PUT',
+     body : JSON.stringify(
+        passKey
+     ),
+      headers: {
+       'Content-Type': 'application/json'
+     }
+    })
+    .then( 
+      router.reload(window.location.pathname))
+    .catch((e)=> {alert(e)})
+
+}
+
+const handleClose = () => {
+  generateKey()
+  savePassKey()
+  setOpen(false);
+}
+
+//console.log(passKeys._id)
+  
+if (session && user.role === 'Admin') {
+ // console.log(passKey)
+  return (
+    <>
+ 
+    You are {session.user.name} <br />logged in with the email {session.user.email} <br /> you are an {user.role} <br />
+      <button onClick={() => signOut({callbackUrl : `/`})}>Sign out</button>
+      <Link href='/createQuestion'><a>
+        Create Question
+      </a></Link>
+      <Link href='/questionBank'><a>
+        Question Bank
+      </a></Link>
+      <Link href='/createQuiz'><a>
+        Create Quiz
+      </a></Link>
+      <Stack spacing={2} direction="row">
+      <Button variant="contained" onClick={generateKey} size='small'>
+        Generate key 
+      </Button>
+    </Stack>
+     <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Use Google's location service?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+          Are you sure you want to generate a new set of keys. <br/>
+           Please note that the existing validation keys 
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=> setOpen(false)} autoFocus>Cancel</Button>
+          <Button onClick={handleClose} >
+            Yes
+        </Button>
+        </DialogActions>
+      </Dialog>
+      
+
+
+
+      <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            Pass Keys
+          </TableRow>
+        </TableHead>
+        <TableBody>
+         
+        <TableRow
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                Chief Examiner
+              </TableCell>
+              {passKeys.chiefExaminerPass.map((pass, index) => (
+              <TableCell align="right" key={index}>{pass}</TableCell>
+              ))}
+              
+            </TableRow><TableRow
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                Examiner
+              </TableCell>
+              {passKeys.examinerPass.map((pass, index) => (
+              <TableCell align="right" key={index}>{pass}</TableCell>
+              ))}
+              
+            </TableRow>
+
+         
+        </TableBody>
+      </Table>
+    </TableContainer>
+
+
+
+
+
+      
+    </>
+  )
+}
+  else if (session && user.role === 'Chief Examiner') {
     return (
       <>
    
@@ -43,12 +221,12 @@ console.log(session)
       </>
     )
   }
-  else if (session && user.role === 'Student'){
+  else if (session && user.role === 'Candidate'){
     return (
       <>
    
       You are {session.user.name} <br />logged in with the email {session.user.email} <br /> you are a {user.role} <br />
-        <button onClick={() => signOut()}>Sign out</button>
+        <button onClick={() => signOut('/')}>Sign out</button>
        
       </>
     )
@@ -58,8 +236,10 @@ console.log(session)
 
   return (
     <>
-      Not signed in <br />
-      <button onClick={() => signIn()}>Sign in</button>
+      You need to create profile before you proceed <br />
+      <Link href='/createProfile'><a>
+        Create Profile
+      </a></Link>
     </>
   )
 }
@@ -67,14 +247,16 @@ console.log(session)
 export async function getServerSideProps(context){
   const session = await getSession(context)
   const client = await clientPromise;
-  const db = client.db("StudentPortal");  
-  const email = session.user.email
+  const db = await client.db("StudentPortal");  
+  const email = await session.user.email
   const users = await db.collection("users").findOne({email : email})
   const user = await JSON.parse(JSON.stringify(users))
-  console.log(session)
+  let passKeys = await db.collection("Pass Keys").findOne()
+  passKeys = await JSON.parse(JSON.stringify(passKeys))
+  console.log(passKeys)
   return {
     props : {
-      user , session
+      user , session, passKeys
     }
   }
 }

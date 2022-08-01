@@ -51,7 +51,7 @@ const CreateQuestion=()=>{
   })
   
    const onSubmit= async (values)=>{
-     
+     e.preventDefault
     const response = await fetch(
      '/api/questionBank',
      { method : 'POST',
