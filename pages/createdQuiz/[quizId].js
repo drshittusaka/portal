@@ -7,12 +7,13 @@ import ValidationError from 'yup';
 import {useSWR} from 'swr';
 import {useState, useEffect} from 'react'
 import axios from 'axios'
-import clientPromise from "../lib/mongodb";
+import clientPromise from "../../lib/mongodb";
 import { getSession, useSession } from 'next-auth/react';
 
 
+
 //import {useState, useEffect} from 'react'
-const CreateQuiz=({datas, subject, user})=>{
+const CreateQuiz=({datas, user, subject, quizId})=>{
   //const [dataState, setDataState] = useState([])
   const subjects = ['', 'English Language', 'Biology', 'Chemistry', 'Mathematics', 'Physics']
     const [data, setData] = useState(datas)
@@ -71,7 +72,7 @@ const CreateQuiz=({datas, subject, user})=>{
   
   const onSubmit= async (values) =>{
 
-    let quizPass = Array(values.numberOfCandidates).fill("")
+    let quizPass = Array(values.numberOfCandidate).fill("")
     quizPass = quizPass.map((e, index) => {
       return (quizPass[index] = Math.random()
         .toString(36)
@@ -90,17 +91,19 @@ const CreateQuiz=({datas, subject, user})=>{
      questions : values.questions.filter((question)=> question.selected === true)
    }
    
-    const response = await fetch(
-     '/api/createQuiz',
-     { method : 'POST',
-      body : JSON.stringify(selectedQuestions),
-       headers: {
-        'Content-Type': 'application/json'
-      }
-     })
-     .then( 
-     router.push('home'))
-     .catch((e)=> {alert(e)})
+   const response = await fetch(
+    `/api/createQuiz/${quizId}`,
+    { method : 'PUT',
+     body : JSON.stringify(
+        selectedQuestions
+     ),
+      headers: {
+       'Content-Type': 'application/json'
+     }
+    })
+    .then( 
+      router.reload(window.location.pathname))
+    .catch((e)=> {alert(e)})
   }
 
   if (session && user.role === 'Chief Examiner'){ return(
@@ -185,7 +188,7 @@ const CreateQuiz=({datas, subject, user})=>{
       </FieldArray> <br/>
           
       
-        <button type='submit' disabled={!formik.isValid || formik.isSubmitting || formik.unTouched }>
+        <button type='submit' disabled={!formik.isValid || formik.isSubmitting || formik.untouched }>
               Submit
             </button>
       </Form>
@@ -202,8 +205,8 @@ export default CreateQuiz
 
 
 export async function getServerSideProps(context){
-
-  const {query} = context
+  const ObjectId = require('mongodb').ObjectId;
+  const {params, query} = context
   let {subject} = query
   const client = await clientPromise;
   const db = client.db("StudentPortal");
@@ -211,16 +214,48 @@ export async function getServerSideProps(context){
   const email = session.user.email
   const users = await db.collection("users").findOne({email : email})
   const user = await JSON.parse(JSON.stringify(users))
-  const queryString = subject != ' ' && subject != undefined ? {subject : subject} : null
-  const question = await db.collection("Question Bank").find(queryString).toArray() // : await db.collection("Question Bank").find().toArray()
-  const questions = await JSON.parse(JSON.stringify(question))
- 
+  // const quizPreparedRaw = await db.collection("Quiz").find({_id: new ObjectId(params.quizId)}) // : await db.collection("Question Bank").find().toArray()
+  // const quizPrepared = await JSON.parse(JSON.stringify(quizPreparedRaw))
+  const quizPreparedRaw = await fetch(`http://localhost:3000/api/createQuiz/${params.quizId}`)
+  const quizPrepared = await quizPreparedRaw.json()
 
+  const queryString = subject != ' ' && subject != undefined ? {subject : subject} : null
+  const questionPerSubject = await db.collection("Question Bank").find(queryString).toArray() // : await db.collection("Question Bank").find().toArray()
+  const questionPerSubjects = await JSON.parse(JSON.stringify(questionPerSubject))
+
+
+ 
+ const{questions} = quizPrepared
+  const question = await db.collection("Question Bank").find().toArray() // : await db.collection("Question Bank").find().toArray()
+  const bankQuestions = await JSON.parse(JSON.stringify(question))
   
+
+  // const unCommon =(quest, quizQuest)=>{
+  //    let res = []
+   
+  //   quizQuest.map((elements, i)=>{
+
+  //     quest.map((element, i)=>{
+  //       if(elements._id != element._id){res.push(element)}
+  //     })
+  //    // if(quest.includes(element) === false){res.push(element)}
+  //   })
+  //   return res
+  // }
+
+  function getDifference(array1, array2) {
+    return array1.filter(object1 => {
+      return !array2.some(object2 => {
+        return object1._id === object2._id;
+      });
+    });
+  }
+
+
 
   return {
     props : {
-      datas : questions, subject: subject ? subject : null, user, session:session
+      datas : getDifference(bankQuestions, questions), user : user, subject : subject ? subject : null, quizId : params.quizId
     }
   }
 }

@@ -12,6 +12,7 @@ export default function SignIn({ csrfToken, providers }) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [message, setMessage] =useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   
     const onSubmit= async (e) =>{
@@ -30,7 +31,7 @@ export default function SignIn({ csrfToken, providers }) {
       <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
       <label>
         Username
-        <input name="username" type="text" value={email} onChange = {e=>setEmail(e.target.value)} />
+       <input name="username" type="text" value={username} onChange = {e=>setUsername(e.target.value)} />
       </label>
       <label>
         Password
@@ -38,16 +39,32 @@ export default function SignIn({ csrfToken, providers }) {
       </label>
       <button onClick={(e)=>onSubmit(e)}>Sign in</button>
     </form>
-  
-  <form method="post" action="/api/auth/callback/email">
+
+    <form method="post" action="/api/auth/signin/email">
       <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
       <label>
-        Username
-        <input name="username" type="text" />
+        Email address
+        <input type="email" id="email" name="email" />
+      </label>
+      <button type="submit">Sign in with Email</button>
+    </form>
+  
+  {/* <form action={async (e)=>{
+    await fetch(
+      '/api/auth/email',{
+        method: 'POST',
+        body:JSON.stringify(email, csrfToken )
+      }
+    )
+  }}>
+      <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
+      <label>
+        Enter email
+        <input name="email" type="email" onChange={(e)=>setEmail(e.target.value)} value={email}/>
       </label>
       
-      <button type="submit">Sign in</button>
-    </form>
+      <button type="submit">Sign in with email link</button>
+    </form> */}
      <div>
       {Object.values(providers).map((provider) => {
         if(provider.name === 'Email' || provider.name === "Credentials"){

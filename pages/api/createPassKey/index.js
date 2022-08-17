@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   const db = client.db("StudentPortal");
   let bodyObject = req.body;
   let newPost = await db.collection("Pass Keys").findOne();
-   res.status(200).json(newPost)
+   res.status(200).json(JSON.parse(JSON.stringify(newPost)))
 }
 
 

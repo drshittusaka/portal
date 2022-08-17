@@ -11,13 +11,15 @@ export default function QuestionBank ({data, user}){
    
  
    useEffect(()=>{     
-     if(!session){       
+     if(!session && status != 'loading'){       
        router.push('/')
      }
-     if (user.role === "Admin" || user.role ==="Chief Examiner" || user.role === 'Examiner'){
-      router.push('/questionBank')
-     }
-     else{router.push('/home')}
+     if(status === 'authenticated' && !(user.role ==="Chief Examiner")){
+      router.push('/home')}
+    //  if (user.role === "Admin" || user.role ==="Chief Examiner" || user.role === 'Examiner'){
+    //   router.push('/questionBank')
+    //  }
+    //  else{router.push('/home')}
    },[session])
  
 
@@ -33,9 +35,10 @@ export default function QuestionBank ({data, user}){
   //useEffect(()=>{setDataState(data)}, [data])
 
 
-if(status === 'authenticated' &&  (user.role === "Admin" || user.role ==="Chief Examiner" || user.role === 'Examiner')){
+if(session &&  (user.role ==="Chief Examiner")){
    return(<div>
-   <h1>Question List</h1>
+   <h1>Quiz</h1>
+   {/* <Link href = {`questionBank/${_id}`}><a> Edit Question </a></Link> */}
    <div>
 
  {
@@ -51,24 +54,22 @@ if(status === 'authenticated' &&  (user.role === "Admin" || user.role ==="Chief 
         </div>)
       })}
       </p>
-      {author === user.email && (<div><button type='button' onClick={() => onDelete(_id)}>DELETE</button>
-      <Link href = {`questionBank/${_id}`}><a> Edit Question </a></Link>
-</div>)}  
+        
     </div>  )
     })
    }
    
  </div>
-   <button type='button' onClick={() => router.push('/createQuestion')}>CREATE QUESTION</button> <br />
+   
   </div> )}
 
-  if( !session  ){
+  if( !session && status != 'loading' ){
     return <><h1>You are not sign in authorized to view this Page</h1><br />
               <h1> Redirecting to sign in Page</h1>
     </>
   }
 
-  if(status === 'authenticated' && !((user.role === "Admin" || user.role ==="Chief Examiner" || user.role === 'Examiner'))){
+  if(status === 'authenticated' && !(user.role ==="Chief Examiner")){
   return <>You are not authorized to view this page</>}
 
  }
@@ -83,7 +84,7 @@ export async function getServerSideProps(context){
   const email = session.user.email
   const users = await db.collection("users").findOne({email : email})
   const user = await JSON.parse(JSON.stringify(users))
-  const question = (user.role === 'Admin' || user.role==='Chief Examiner') ?   await db.collection("Question Bank").find().toArray() : await db.collection("Question Bank").find({author : email}).toArray()
+  const question = (user.role==='Chief Examiner') ?   await db.collection("Quiz").find({author : email}).toArray() : null
  
 
   

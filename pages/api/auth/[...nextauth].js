@@ -12,6 +12,9 @@ import EmailProvider from 'next-auth/providers/email'
 import MongoClientPromise from '../../../lib/mongodb'
 
 
+const THIRTY_DAYS = 30 * 24 * 60 * 60
+const THIRTY_MINUTES = 30 * 60
+
 export default NextAuth({
   providers:[
     
@@ -41,8 +44,15 @@ export default NextAuth({
     })
     
   ],
-  secret: process.env.JWT_SECRET,
+  //secret: process.env.JWT_SECRET,
   adapter: MongoDBAdapter(clientPromise),
+  secret: process.env.SECRET,
+  session: {
+    strategy: 'jwt',
+    maxAge: THIRTY_DAYS,
+    updateAge: THIRTY_MINUTES
+  },
+  //adapter: MongoDBAdapter(MongoClientPromise),
   pages: {
     signIn: '/signin',
     //signOut: '/auth/signout',

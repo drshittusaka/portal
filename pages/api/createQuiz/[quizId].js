@@ -20,17 +20,19 @@ export default async function handler(req, res) {
       res.status(200).json( posts );
       break;
       
-  /**  case "PUT":
+   case "PUT":
       let bodyObject = req.body;
-      const newPut = await db.collection("Question Bank")
-    .findOneAndUpdate({_id : new ObjectId(questionId)}, {$set : { subject : bodyObject.subject,
-    questionType : bodyObject.questionType,
-    question : bodyObject.question,
-    answers : bodyObject.answers.map(({answer, is_correct})=>{
-      return {answer : answer, is_correct : is_correct}  })}});
+      const newPut = await db.collection("Quiz")
+    .findOneAndUpdate({_id : new ObjectId(quizId)}, {$set : { 
+    author : bodyObject.author,
+    quizName : bodyObject.quizName,
+    timeAllowed : bodyObject.timeAllowed,
+    quizPass : bodyObject.quizPass,
+     questions : bodyObject.questions.map((question)=>{
+      return question  })}});
        res.status(400).json({ success: 'success'})
      // res.json(newPost);
-      break; **/
+      break; 
   }
 }
 

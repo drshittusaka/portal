@@ -1,17 +1,45 @@
 
-import {signIn} from "next-auth/react"
+import {signIn, useSession} from "next-auth/react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/router"
+
+
 
 
 
 export default function Component() {
  
+  const{data: session, status} = useSession()
+  const router = useRouter()
+
+  useEffect(()=>{
+    
+    if(session){
+      
+      router.push('/home')
+    }
+  },[session])
+
+  if (!session && status==='loading'){
+    return <h1>Page is Loading.........</h1>
+   }
+
+ if(status != "loading" &&  !session){
   return (
     <>
       Not signed in <br />
       <button onClick={() => signIn()}>Sign in</button>
     </>
-  )
+  )}
+  if(session){
+    return (
+      <>
+        <h1>You are signed in </h1> <br />
+       <h1> You are being redirected to the home page</h1>
+      </>)
+  }
 }
+
 
 
 

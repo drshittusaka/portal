@@ -20,7 +20,7 @@ import Paper from '@mui/material/Paper';
 import { useRouter } from 'next/router';
 
 
-export default function Component({ user, passKeys}) {
+export default function Component({ user, passKeys, quiz}) {
   const [open, setOpen] = useState(false);
   const router = useRouter()
  let {data : session } = useSession()
@@ -37,6 +37,14 @@ export default function Component({ user, passKeys}) {
 }
 );
 
+const onDelete= async (quizId)=>{
+  const resp = await fetch(`/api/createQuiz/${quizId}`,{
+    method : "DELETE",
+  })
+  const data = await resp.json()
+  router.reload('home')
+  
+}
 
 
 //generateKey function to generate Pass Keys, save to database and close the dialog box
@@ -98,7 +106,7 @@ const handleClose = () => {
 //console.log(passKeys._id)
   
 if (session && user.role === 'Admin') {
- // console.log(passKey)
+
   return (
     <>
  
@@ -203,6 +211,17 @@ if (session && user.role === 'Admin') {
         <Link href='/createQuiz'><a>
           Create Quiz
         </a></Link>
+        {
+    quiz.map(({_id, quizName}, index)=>{
+      return(<div key={_id}>
+      <h2> Quiz Title {quizName}</h2>
+      
+      <button type='button' onClick={() => onDelete(_id)}>DELETE QUIZ</button>
+      <button type='button' onClick={() => router.push(`createdQuiz/${_id}`)}>Update Quiz</button>
+    </div>  )
+    })
+   }
+
       </>
     )
   }
@@ -253,10 +272,11 @@ export async function getServerSideProps(context){
   const user = await JSON.parse(JSON.stringify(users))
   let passKeys = await db.collection("Pass Keys").findOne()
   passKeys = await JSON.parse(JSON.stringify(passKeys))
-  console.log(passKeys)
+  const question = (user.role==='Chief Examiner') ?   await db.collection("Quiz").find({author : email}).toArray() : null
+  const quiz = await JSON.parse(JSON.stringify(question))
   return {
     props : {
-      user , session, passKeys
+      user , session, passKeys, quiz : quiz
     }
   }
 }

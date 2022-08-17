@@ -2,18 +2,19 @@ import {Formik, Form, Field, FieldArray, ErrorMessage} from 'formik';
 import * as yup from 'yup';
 import ValidationError from 'yup';
 import {useRouter} from 'next/router';
-import { useSession } from 'next-auth/react';
+import { useSession, getSession } from 'next-auth/react';
 import Link from 'next/link';
+import clientPromise from "../lib/mongodb";
 
 
 
-const CreateQuestion=()=>{
-  const { data : session} = useSession()
+const CreateQuestion=({user}, session)=>{
+ // const { data : session} = useSession()
   const subjects=['','Mathematics', 'English Language', 'Biology', 'Chemistry', 'Physics']
   const questionTypes=['','Single Best Answer', 'Multiple Choice']
   const router = useRouter()
   const initialValues = {
-    author : session.user.email,
+    author : user.email,
     subject : ' ',
     questionType : ' ',
     question : ' ',
@@ -24,6 +25,8 @@ const CreateQuestion=()=>{
     },
     ]
   }
+
+ 
   
   const validationSchema = yup.object().shape({
     subject : yup.string().required('This field is required'),
@@ -51,7 +54,7 @@ const CreateQuestion=()=>{
   })
   
    const onSubmit= async (values)=>{
-     e.preventDefault
+    // e.preventDefault
     const response = await fetch(
      '/api/questionBank',
      { method : 'POST',
@@ -67,7 +70,8 @@ const CreateQuestion=()=>{
    }
  
 
-  if(session){
+  if(session ){
+    
     return<>
     <h2>Create Question</h2>
     <Formik
@@ -93,7 +97,7 @@ const CreateQuestion=()=>{
       
        <div>
     <label htmlFor='questionType'>Type of Question</label>
-      <Field as='select'name='questionType'>
+      <Field as='select' name='questionType'>
       {
         questionTypes.map(questionType=>{
           return <option key={questionType} value={questionType}>{questionType}</option>
@@ -105,8 +109,8 @@ const CreateQuestion=()=>{
 
     
     <div>
-    <Field name='author' type='text' disabled/>
-   <ErrorMessage name='author' />
+    <Field name='author' value= {user.email}  type='text' disabled/>
+ 
     </div>
       
     
@@ -167,37 +171,19 @@ export default CreateQuestion
 
 
 
-
-
-/**   { answers.map(({answer, is_correct}, index)=>{ return(
-      <div key={index}>
+export async function getServerSideProps(context){
+  const session = await getSession(context)
+  const client = await clientPromise;
+  const db = await client.db("StudentPortal");  
+  const email = await session.user.email
+  const users = await db.collection("users").findOne({email : email})
+  const user = await JSON.parse(JSON.stringify(users))
+  let passKeys = await db.collection("Pass Keys").findOne()
+  passKeys = await JSON.parse(JSON.stringify(passKeys))
   
-        <Field name={`answers[${index}].answer`}  />
-      
-        <button type='button' onClick={() => push() } >-</button>
- 
-      {index > 0 && (
-                            <button type='button' onClick={() => remove(index)}>
-                              -
-                            </button>
-                          )}
-  </div> 
-        )
-      
-    })} **/ 
-
-
-
-/* 
-<Field name='answers'>{
-   ({field, meta})=>{
-     const {name, value} = field
-     return<>
-     <input type='text' name={answer} {...field}/>
-     
-    <input type='checkbox' name={is_correct} {...field}/>
-     
-     //{meta.touch && meta.error ? <div>{meta.error}</div> : null}
-     </>
-   }
- }</Field> **/
+  return {
+    props : {
+      user , session
+    }
+  }
+}

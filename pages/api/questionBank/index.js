@@ -22,7 +22,7 @@ export default async function handler(req, res) {
       res.status(200).json(posts);
       }
     else{
-      const posts = await db.collection("Question Bank").find({}).toArray();
+      const posts = await db.collection("Question Bank").find().toArray();
       res.status(200).json(posts);
     }
       break;

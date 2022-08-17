@@ -5,7 +5,7 @@ export default function QuestionBank ({data}){
   //const [dataState, setDataState] = useState([])
    const router = useRouter()
    const onDelete= async (quizId)=>{
-    const resp = await fetch(`/api/chooseQuiz/${quizId}`,{
+    const resp = await fetch(`/api/createQuiz/${quizId}`,{
       method : "DELETE",
     })
     const data = await resp.json()
