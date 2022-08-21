@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     case "POST":
       let bodyObject = req.body;
       let newPost = await db.collection("AttemptedQuiz").insertOne(bodyObject);
-       res.status(400).json('success')
+       res.status(200).json('success')
      // res.json(newPost);
       break;
     case "GET":

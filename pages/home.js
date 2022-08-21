@@ -1,4 +1,4 @@
-
+import TextField from "@mui/material/TextField";
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,10 +20,19 @@ import Paper from '@mui/material/Paper';
 import { useRouter } from 'next/router';
 
 
+
 export default function Component({ user, passKeys, quiz}) {
   const [open, setOpen] = useState(false);
   const router = useRouter()
+  const [quizname, setQuizName] = useState('')
+  const [quizpass, setQuizPass] = useState('')
  let {data : session } = useSession()
+
+
+ const attemptQuiz = async () => {
+  router.push(`attemptQuiz/${quizname}/${quizpass}`)
+ }
+
  
  const handleClickOpen = () => {
   setOpen(true);
@@ -243,9 +252,47 @@ if (session && user.role === 'Admin') {
   else if (session && user.role === 'Candidate'){
     return (
       <>
+      <Dialog open={open} onClose={handleClose}>
+  <DialogTitle>Enter the quiz details</DialogTitle>
+  <DialogContent>
+    <DialogContentText>
+    Enter the quiz details
+    </DialogContentText>
+    <TextField
+      autoFocus
+      margin="dense"
+      id="name"
+      label="Enter the Quiz Name to confirm your role"
+      type="text"
+      fullWidth
+      variant="standard"
+      name="quizName"
+      value={quizname}
+      onChange={(e)=>setQuizName(e.target.value)}
+    />
+    <TextField
+      autoFocus
+      margin="dense"
+      id="name"
+      label="Enter the passkey to confirm your role"
+      type="text"
+      fullWidth
+      variant="standard"
+      name="quizPass"
+      value={quizpass}
+      onChange={(e)=>setQuizPass(e.target.value)}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleClose}>Cancel</Button>
+    <Button onClick={attemptQuiz}>Submit</Button>
+  </DialogActions>
+</Dialog>
+
    
       You are {session.user.name} <br />logged in with the email {session.user.email} <br /> you are a {user.role} <br />
         <button onClick={() => signOut('/')}>Sign out</button>
+        <button onClick={() => setOpen(true)}>Attempt Quiz</button>
        
       </>
     )

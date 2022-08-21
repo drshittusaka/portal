@@ -56,7 +56,7 @@ const CreateQuiz=({datas, subject, user})=>{
   
   const validationSchema= yup.object().shape({
     quizName : yup.string().required('Quiz name is required'),
-  //  timeAllowed : yup.number().required('Specify the time allowed for the quiz'),
+   // timeAllowed : yup.number().required('Specify the time allowed for the quiz')
   })
   
 
@@ -85,7 +85,11 @@ const CreateQuiz=({datas, subject, user})=>{
    let selectedQuestions = { 
     author : user.email,
     quizName: values.quizName,
-     timeAllowed: timeHr * 60 * 60 + timeMin * 60,
+    timeAllowedHr : values.timeAllowedHr,
+    timeAllowedMin : values.timeAllowedMin,
+    negFacSba : values.negFacSba,
+    negFacMc : values.negFacMc,
+    timeAllowed: timeHr * 60 * 60 + timeMin * 60,
      quizPass:quizPass,
      questions : values.questions.filter((question)=> question.selected === true)
    }
@@ -137,7 +141,9 @@ const CreateQuiz=({datas, subject, user})=>{
       <label>Time allowed </label>
       <Field name='timeAllowedHr' type='number' placeHolder='Hour' />
       <Field name='timeAllowedMin' type='number' placeHolder='Minutes' />
-      <Field name='numberOfCandidate' type='number' placeHolder='Enter number of candidates' />
+      <Field name='numberOfCandidates' type='number' placeHolder='Enter number of candidates' />
+      <Field name='negFacSba' type='number' placeHolder='Multiplication factor for wrong answer' />
+      <Field name='negFacMc' type='number' placeHolder='Multiplication factor for wrong answer' />
       </div> 
       <FieldArray name='questions'>
       {
@@ -185,7 +191,7 @@ const CreateQuiz=({datas, subject, user})=>{
       </FieldArray> <br/>
           
       
-        <button type='submit' disabled={!formik.isValid || formik.isSubmitting || formik.unTouched }>
+        <button type='submit' disabled={!formik.isValid || formik.isSubmitting || !formik.dirty }>
               Submit
             </button>
       </Form>
