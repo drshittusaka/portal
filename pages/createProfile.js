@@ -106,9 +106,12 @@ export default function Component({ user, chiefExaminerPass, examinerPass, candi
 
     const handleOpen = (e) => {
       if(role){
-        
+        if (role === "Candidate"){
+          router.push('/paystack')
+        }
+        else{
         setEnteredPassKey(e.target.value)
-        setOpen(true);
+        setOpen(true)}
       }else{ alert('Please choose your role')}
      
     }
@@ -175,13 +178,23 @@ if (session) {
     </Select>
   </FormControl>
 </Box>
-<Button variant="outlined" onClick={role === 'Candidate' ? createRole : handleOpen }>
+<Button variant="outlined" onClick={role === 'Candidate' ? router.push('/paystack') : handleOpen }>
   Submit Form
 </Button>
         
       </>
     )
   }
+
+  if(user === null){
+    return (
+      <>
+        Not signed in <br />
+        <button onClick={() => signIn()}>Sign in</button>
+      </>
+    )}
+
+
  
 }
 
@@ -196,7 +209,12 @@ export async function getServerSideProps(context){
   passKeys = await JSON.parse(JSON.stringify(passKeys))
   let {chiefExaminerPass, examinerPass, candidatePass, _id} = passKeys
 
-  console.log(chiefExaminerPass)
+  if (!session) {
+    return {
+      redirect: { destination: "/" },
+    };
+  }
+
   return {
     props : {
       user , session, chiefExaminerPass, examinerPass, candidatePass, _id

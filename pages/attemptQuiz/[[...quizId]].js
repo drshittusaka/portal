@@ -12,11 +12,13 @@ import { getSession, useSession } from 'next-auth/react';
 
 //import {useState, useEffect} from 'react'
 const AttemptQuiz=({data, user})=>{
-  const { quizName, timeAllowed, questions, negFacSba, negFacMc} = data
+
+  const { quizName, timeAllowed, questions, negFacSba, negFacMc, _id} = data
   const totalSba = (questions.filter((sB)=>(sB.questionType==="Single Best Answer"))).length
   const allMc = (questions.filter((mC)=>(mC.questionType==="Multiple Choice")))
   let allMcq = allMc.map((element)=>element.answers.length)
   let totalMcq = allMcq.reduce((prev, curr)=> {return prev + curr}, 0)
+
   const [response, setResponse] = useState([])
   const [timer, setTimer] = useState(timeAllowed)
   const router = useRouter()
@@ -29,22 +31,25 @@ const AttemptQuiz=({data, user})=>{
     let attemptedSba= response.filter((res)=>(res.questionType === 'Single Best Answer'))
     let correctSba= attemptedSba.filter((res)=>(res.is_correct === true))
     correctSba = correctSba.length
-    const negSba = attemptedSba - correctSba
+    let negSba = attemptedSba - correctSba
     negSba = negSba * negFacSba
+    let sbaScore= correctSba - negSba
    // setRightSba(correctSba)
-    let attemptedMcqQuestions= response.filter((res)=>(res.questionType === 'Multiple Choice'))
-    let attemptedMcqOptions = attemptedMcqQuestions.map((element)=>element.answers.length)
-    let attemptedMcq = attemptedMcqOptions.reduce((prev, curr)=> {return prev + curr}, 0)
+    let attemptedMcq= response.filter((res)=>(res.questionType === 'Multiple Choice'))
+    //let attemptedMcqOptions = attemptedMcqQuestions.map((element)=>(element.answers))
+     // let attemptedMcq =  attemptedMcqOptions.reduce((prev, curr)=> {return prev + curr}, 0)
     let correctMcq= attemptedMcq.filter((res)=>(res.is_correct === res.choice) || (res.is_correct === undefined && res.choice === false))
     correctMcq = correctMcq.length
-    const negMcq = attemptedMcq - correctMcq
+    let negMcq = attemptedMcq.length - correctMcq
     negMcq = negMcq * negFacMc
+    let mcqScore = correctMcq - negMcq
+
+    let scoreTotal = ((mcqScore + sbaScore)/(totalSba + totalMcq))*100
   //  setRightMcq(correctMcq) 
-    
-    const resp = await fetch(
-     '/api/attemptedQuiz',
-     { method : 'POST',
-      body : JSON.stringify({
+
+  const attemptedQuiz ={
+    quizName: quizName,
+        quizId : _id,
         candidate : user,
         response,
         attemptedSBA: attemptedSba.length,
@@ -55,15 +60,38 @@ const AttemptQuiz=({data, user})=>{
         correctMCQ : correctMcq,
         totalMCQ : totalMcq,
         negFacMCQ : negFacMc, 
-        score : totalMcq - negMcq + totalSba - negSba,
+        score : scoreTotal ,
         remainingTime : timer
-      }),
+  
+  }
+    
+    const resp = await fetch(
+     '/api/attemptedQuiz',
+     { method : 'POST',
+      body : JSON.stringify({
+        attemptedQuiz
+            }),
        headers: {
         'Content-Type': 'application/json'
       }
      })
      .then(router.push('/home'))
      .catch((e)=> {alert(e)}) 
+
+     
+     await fetch(
+       `/api/createProfile/${user.email}`,
+      { method : 'POST',
+       body : JSON.stringify({
+        attemptedQuiz
+       }),
+        headers: {
+         'Content-Type': 'application/json'
+       }
+      })
+      .then(router.push('/home'))
+      .catch((e)=> {alert(e)}) 
+
     
     alert('SUBMITTED') 
   } 
@@ -74,8 +102,7 @@ const AttemptQuiz=({data, user})=>{
   },[timer])
   
   
-console.log(response)
-  
+
   return(
   <>
 

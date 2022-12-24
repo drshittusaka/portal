@@ -1,7 +1,8 @@
 
 
 import clientPromise from "../../../lib/mongodb";
-const ObjectId = require('mongodb').ObjectId;
+const mongodb = require('mongodb')
+const ObjectId = mongodb.ObjectId;
 
 export default async function handler(req, res) {
   const {questionId} = req.query

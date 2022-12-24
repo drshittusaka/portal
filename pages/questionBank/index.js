@@ -3,7 +3,21 @@ import clientPromise from "../../lib/mongodb";
 import Link from 'next/link' 
 import { getSession, useSession } from 'next-auth/react';
 import { useEffect} from 'react'
+import useSWR from "swr";
+import Divider from '@mui/material/Divider';
+
+//const fetcher = (url) => fetch(url).then((res) => res.json());
+
+
+
 export default function QuestionBank ({data, user}){
+
+  // const { data, error } = useSWR(
+  //   "http://localhost:3000/api/questionBank",
+  //   fetcher
+  // )
+
+
   //const [dataState, setDataState] = useState([])
   const {data:session, status} = useSession()
    const router = useRouter()
@@ -39,10 +53,10 @@ if(status === 'authenticated' &&  (user.role === "Admin" || user.role ==="Chief 
    <div>
 
  {
-    data.map(({_id, subject, question, questionType, answers, author}, index)=>{
+    data.map(({_id, subject, question, questionType, answers, author, imageUrl}, index)=>{
       return(<div key={_id}>
       <h2> Subject {subject}</h2><h2> {questionType} </h2> { user.role==='Admin' ? <h2> {author} </h2> : null }
-   
+   {imageUrl && <div> <img src={imageUrl} width='100px' height='100px' /> </div>}
       <h2> {question} </h2>
       <p>
       {answers.map(({answer, is_correct}, index)=>{
@@ -60,7 +74,9 @@ if(status === 'authenticated' &&  (user.role === "Admin" || user.role ==="Chief 
    
  </div>
    <button type='button' onClick={() => router.push('/createQuestion')}>CREATE QUESTION</button> <br />
+  
   </div> )}
+   <Divider />
 
   if( !session  ){
     return <><h1>You are not sign in authorized to view this Page</h1><br />

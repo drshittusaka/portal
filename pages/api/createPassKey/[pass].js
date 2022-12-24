@@ -38,7 +38,7 @@ export default async function handler(req, res) {
            res.status(200).json({ success: 'success'})
            }
         catch(e){
-        console.log(e.name)
+      
      }
       }
      try{
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
            res.status(200).json({ success: 'success'})
      }catch(e){
-        console.log(e.name)
+        
      }
      // res.json(newPost);
       break;

@@ -5,15 +5,24 @@ import {useRouter} from 'next/router';
 import { useSession, getSession } from 'next-auth/react';
 import Link from 'next/link';
 import clientPromise from "../lib/mongodb";
-
+import { FileInput, ImageInput } from "formik-file-and-image-input/lib"
+import { useState } from 'react';
+import { serialize } from 'object-to-formdata';
 
 
 const CreateQuestion=({user}, session)=>{
  // const { data : session} = useSession()
-  const subjects=['','Mathematics', 'English Language', 'Biology', 'Chemistry', 'Physics']
+ let [picture, setPicture] = useState([])
+ let [pix, setPix] = useState()
+
+
+   const subjects=['','Mathematics', 'English Language', 'Biology', 'Chemistry', 'Physics']
   const questionTypes=['','Single Best Answer', 'Multiple Choice']
   const router = useRouter()
   const initialValues = {
+
+    image: [],
+
     author : user.email,
     subject : ' ',
     questionType : ' ',
@@ -54,33 +63,101 @@ const CreateQuestion=({user}, session)=>{
   })
   
    const onSubmit= async (values)=>{
+   //const formData = serialize(values)
+  const formData = new FormData()
+  //delete values.image[0].length
+  //delete values.image[0].item
+  //for(const img in values.image[0]){formData.append(`${img}`, values.image[0][img])}
+//    for (let i = 0; i < values.image[0].length; i++) {
+//      formData.append(values.image[0][i].name, values.image[0][i])
+//  }
+
+
+
+formData.append('image', values.image[0] )
+
+  // const fileList = Array.from(values.image[0])
+  // for (let i = 0; i < fileList.length; i++) {
+  //   formData.append(fileList[i].name, fileList[0])
+  // }
+
+// //  fileList.map((img, i) => {
+// //  // const arr =Array.from(img)
+// //   formData.append(`img ${i}`,  img)
+// //  })
+// formData.append('image', fileList)
+// formData.append('image', Array.from(values.image[0])[0])
+formData.append('body',  JSON.stringify(values))
+ // setPicture(fileList)
+  //  let fileReader = new FileReader()
+  //  fileReader.readAsDataURL(values.image)
+  //  fileReader.onload = function(e){
+  //   setPicture(e.target.result)
+  //  }
     // e.preventDefault
-    const response = await fetch(
-     '/api/questionBank',
-     { method : 'POST',
-      body : JSON.stringify(values),
-       headers: {
-        'Content-Type': 'application/json'
-      }
-     })
-     .then( 
-     router.push('questionBank'))
-     .catch((e)=> {alert(e)})
     
+     const response = await fetch(
+       '/api/questionBank',
+    // 'https://api.cloudinary.com/v1_1/zaktech/image/upload',
+     { method : 'POST',
+      body : formData,
+      //  headers: {
+      //  // 'Content-Type': 'application/json'
+      // }
+     })
+     .then( r =>console.log (r.json()))
+     .catch((e)=> {alert(e.message)})
+    //console.log(values.image)
+   //  fileList.map((img, i) =>  console.log(img))   
+console.log(Array.from(formData))
+//console.log(fileList)
    }
  
 
   if(session ){
-    
+   
     return<>
     <h2>Create Question</h2>
+   {/* {picture.map((img, i) =>  {
+      let fileReader = new FileReader()
+    fileReader.readAsDataURL(img)
+    fileReader.onload = function(e){
+     setPix(e.target.result)
+    }
+   
+  return <div> <img src={pix} width='100px' height='100px' /> </div>})   } */}
     <Formik
     initialValues = {initialValues}
     onSubmit = {onSubmit}
     validationSchema = {validationSchema}
     >
     {formik=>{
-      return<Form>
+      return<form onSubmit={formik.handleSubmit}>
+
+
+
+<label htmlFor="file">File upload </label>
+                  <input name="image" type="file"  onChange={(event) => {
+                    formik.setFieldValue("image", event.currentTarget.files);
+                  }}  />
+
+   {/*       <Field as='Input' name='image' type='file' onChange={(e)=>formik.setFieldValue('image', e.target.files[0])}/>
+
+                <FileInput
+                    name="file"
+                    validFormats={fileFormats}
+                    component={CustomFileInputWrapper}
+                />
+                <ImageInput
+                    name="image"
+                    validFormats={imageFormats}
+                    component={CustomImageInputWrapper}
+                /> */
+               
+                }
+
+
+
     <div>
     <label htmlFor='Subject'>Select Subject/Course</label>
       <Field as='select'name='subject'>
@@ -112,13 +189,25 @@ const CreateQuestion=({user}, session)=>{
     <Field name='author' value= {user.email}  type='text' disabled/>
  
     </div>
+
+   
       
+    {/* <Field name='image' >
+      {
+        ({field})=>{
+          console.log(field)
+         return <div><Input  type='file' {...field} onChange={(e)=>field.setFieldValue('image', e.target.files[0])}/></div>
+        }
+      }
+    </Field>
+       */}
     
       
       <div>
+      
     <label htmlFor='question'>Enter Question</label>
-    <Field name='question' type='text'/>
-   <ErrorMessage name='question' />
+      <Field name='question' type='text'/>
+      <ErrorMessage name='question' />
     </div>
       <div>
     <label htmlFor='Options'>Enter Choices</label>
@@ -155,7 +244,7 @@ const CreateQuestion=({user}, session)=>{
                 Submit
               </button>
       
-    </Form>}}
+    </form>}}
     </Formik>
     </>
   }

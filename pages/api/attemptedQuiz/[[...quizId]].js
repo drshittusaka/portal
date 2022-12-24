@@ -1,6 +1,9 @@
 import clientPromise from "../../../lib/mongodb";
+const ObjectId = require('mongodb').ObjectId;
+
 
 export default async function handler(req, res) {
+  const {quizId} = req.query
   const client = await clientPromise;
   const db = client.db("StudentPortal");
   switch (req.method) {
@@ -11,7 +14,7 @@ export default async function handler(req, res) {
      // res.json(newPost);
       break;
     case "GET":
-      const posts = await db.collection("Quiz").find({}).toArray();
+      const posts = await db.collection("AttemptedQuiz").find({quizId: quizId[0]}).toArray();
       res.status(200).json(posts);
     
       break;

@@ -18,22 +18,67 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { useRouter } from 'next/router';
+import useSWR from "swr";
+import axios from 'axios'
+import Badge from '@mui/material/Badge';
+import Divider from '@mui/material/Divider';
 
 
-
-export default function Component({ user, passKeys, quiz}) {
+export default function Component({ user, passKeys, quiz, attemptedQuiz}) {
   const [open, setOpen] = useState(false);
   const router = useRouter()
   const [quizname, setQuizName] = useState('')
   const [quizpass, setQuizPass] = useState('')
+  const [manualExam, setManualExam] = useState({})
+  const [attempts, setAttempts] = useState([])
+  const [display, setDisplay] = useState(false)
  let {data : session } = useSession()
+ //const [quizAttempted, setQuizAttempted] = useState(attemptedQuiz)
+
+ const getAttemptedQuiz = async (quizId) =>{ 
+    const attempt = attemptedQuiz.filter((element)=> element.quizId === quizId)
+    setAttempts(attempt)
+    setDisplay(!display)
+
+ }
 
 
  const attemptQuiz = async () => {
   router.push(`attemptQuiz/${quizname}/${quizpass}`)
  }
 
- 
+ const submitManualExam = async () =>{
+  await fetch(
+    '/api/attemptedQuiz',
+    { method : 'POST',
+     body : JSON.stringify({
+       manualExam
+           }),
+      headers: {
+       'Content-Type': 'application/json'
+     }
+    })
+    .then(router.push('/home'))
+    .catch((e)=> {alert(e)}) 
+
+    
+    await fetch(
+      `/api/createProfile/${manualExam.email}`,
+     { method : 'POST',
+      body : JSON.stringify({
+       manualExam
+      }),
+       headers: {
+        'Content-Type': 'application/json'
+      }
+     })
+     .then(router.push('/home'))
+     .catch((e)=> {alert(e)}) 
+setManualExam({})
+   
+   alert('SUBMITTED') 
+ }
+
  const handleClickOpen = () => {
   setOpen(true);
 };
@@ -227,9 +272,63 @@ if (session && user.role === 'Admin') {
       
       <button type='button' onClick={() => onDelete(_id)}>DELETE QUIZ</button>
       <button type='button' onClick={() => router.push(`createdQuiz/${_id}`)}>Update Quiz</button>
+      <Badge badgeContent={attemptedQuiz.filter((element)=> element.quizId ==_id).length} color="primary">   
+      <button type='button' onClick={() => getAttemptedQuiz(_id) }>Get the Quiz Attempted</button>
+      </Badge>
+      <Divider />
+    </div>  )
+    })
+   
+
+   }
+<button onClick={() => setDisplay(!display)}>Enter Manual exam score</button>
+{ display &&
+
+<div className='App'>
+      <div className='container'>
+        <p>Enter the scores of the paper conducted exams</p>
+        <input        
+          type='text'
+          placeholder='Exam title'
+          onChange={(e) =>
+            setManualExam({ ...manualExam, examTitle: e.target.value })
+          }
+        />
+        <input
+          name = 'score'
+          type='number'
+          placeholder='Enter Score'
+          onChange={(e) =>
+            setManualExam({ ...manualExam, score : e.target.value })
+          }
+        />
+        <input          
+          type='email'
+          placeholder='email'
+          onChange={(e) =>
+            setManualExam({ ...manualExam, email: e.target.value })
+          }
+         />
+        
+        <button onClick={() => submitManualExam()}>Submit Manual exam score</button>
+      </div>
+    </div>}
+
+
+    
+   
+
+   { display &&
+     attempts.map(({_id, candidate, score}, index)=>{
+      return(<div key={_id}>
+      <h4>Candidate name: {candidate.name}</h4>
+      <h4>Candidate email: {candidate.email}</h4>
+      <h4>Candidate score: {candidate.score ? candidate.score: '0%' }</h4>  
+      <Divider />   
     </div>  )
     })
    }
+   
 
       </>
     )
@@ -293,7 +392,18 @@ if (session && user.role === 'Admin') {
       You are {session.user.name} <br />logged in with the email {session.user.email} <br /> you are a {user.role} <br />
         <button onClick={() => signOut('/')}>Sign out</button>
         <button onClick={() => setOpen(true)}>Attempt Quiz</button>
-       
+        <button onClick={() => router.push("/paystack")}>Pay School Fees</button>
+        <button onClick={() => setDisplay(!display)}>See attempted Quiz</button>
+        { user.attemptedQuiz ? display &&
+     user.attemptedQuiz.map(({_id, quizName, score, manualExam}, index)=>{
+      return(<div key={_id}>
+      <h4>Quiz title: {quizName || manualExam.examTitle}</h4>
+     {<h4>Candidate score:{quizName ? (isNaN(score) || score === undefined ? '0%' : score)  : manualExam.score}</h4> }
+    
+      <Divider />   
+    </div>  )
+    }) : null
+   }
       </>
     )
   }
@@ -311,23 +421,31 @@ if (session && user.role === 'Admin') {
 }
 
 export async function getServerSideProps(context){
-  const session = await getSession(context)
+  const {user} = await getSession(context)
   const client = await clientPromise;
   const db = await client.db("StudentPortal");  
-  const email = await session.user.email
-  const users = await db.collection("users").findOne({email : email})
-  const user = await JSON.parse(JSON.stringify(users))
+  // const email = await session.user.email
+  // const users = await db.collection("users").findOne({email : email})
+  // const user = await JSON.parse(JSON.stringify(users))
   let passKeys = await db.collection("Pass Keys").findOne()
   passKeys = await JSON.parse(JSON.stringify(passKeys))
+  let attemptedQuiz = await db.collection("AttemptedQuiz").find().toArray()
+  attemptedQuiz = await JSON.parse(JSON.stringify(attemptedQuiz))
+  
   const question = (user.role==='Chief Examiner') ?   await db.collection("Quiz").find({author : email}).toArray() : null
   const quiz = await JSON.parse(JSON.stringify(question))
   return {
     props : {
-      user , session, passKeys, quiz : quiz
+      user ,  passKeys, quiz : quiz, attemptedQuiz: attemptedQuiz
     }
   }
-}
 
+if (!user) {
+  return {
+    redirect: { destination: "/" }
+  }
+}
+}
 
 
 
